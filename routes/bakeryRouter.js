@@ -7,6 +7,7 @@ const bakeryRouter = express.Router();
 bakeryRouter.route('/')
 .get((req, res, next) => {
     Bakery.find()
+    .populate('comments.author')
     .then(bakeries => {
         res.statusCode = 200;
         res.setHeader('Content-Type', 'application/json');
@@ -41,7 +42,8 @@ bakeryRouter.route('/')
 bakeryRouter.route('/:bakeryId')
 .get((req, res, next) => {
     Bakery.findById(req.params.bakeryId)
-    .then(bakeryRouter => {
+    .populate('comments.author')
+    .then(bakery => {
         res.statusCode = 200;
         res.setHeader('Content-Type', 'application/json');
         res.json(bakery);
@@ -76,6 +78,7 @@ bakeryRouter.route('/:bakeryId')
 bakeryRouter.route('/:bakeryId/comments')
 .get((req, res, next) => {
     Bakery.findById(req.params.bakeryId)
+    .populate('comments.author')
     .then(bakery => {
         if (bakery) {
             res.statusCode = 200;
@@ -93,6 +96,7 @@ bakeryRouter.route('/:bakeryId/comments')
     Bakery.findById(req.params.bakeryId)
     .then(bakery => {
         if (bakery) {
+            req.body.author = req.user._id;
             bakery.comments.push(req.body);
             bakery.save()
             .then(bakery => {
@@ -139,6 +143,7 @@ bakeryRouter.route('/:bakeryId/comments')
 bakeryRouter.route('/:bakeryId/comments/:commentId')
 .get((req, res, next) => {
     Bakery.findById(req.params.bakeryId)
+    .populate('comments.author')
     .then(bakery => {
         if (bakery && bakery.comments.id(req.params.commentId)) {
             res.statusCode = 200;
