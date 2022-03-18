@@ -15,7 +15,7 @@ bakeryRouter.route('/')
     })
     .catch(err => next(err));
 })
-.post(authenticate.verifyUser, (req, res, next) => {
+.post(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
     Bakery.create(req.body)
     .then(bakery => {
         console.log('Bakery Created ', bakery);
@@ -29,7 +29,7 @@ bakeryRouter.route('/')
     res.statusCode = 403;
     res.end('PUT operation not supported on /bakeries');
 })
-.delete(authenticate.verifyUser, (req, res, next) => {
+.delete(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
     Bakery.deleteMany()
     .then(response => {
         res.statusCode = 200;
@@ -54,7 +54,7 @@ bakeryRouter.route('/:bakeryId')
     res.statusCode = 403;
     res.end(`POST operation not supported on /bakeries/${req.params.bakeryId}`);
 })
-.put(authenticate.verifyUser, (req, res, next) => {
+.put(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
     Bakery.findByIdAndUpdate(req.params.bakeryId, {
         $set: req.body
     }, { new: true })
@@ -65,7 +65,7 @@ bakeryRouter.route('/:bakeryId')
     })
     .catch(err => next(err));
 })
-.delete(authenticate.verifyUser, (req, res, next) => {
+.delete(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
     Bakery.findByIdAndDelete(req.params.bakeryId)
     .then(response => {
         res.statusCode = 200;
@@ -117,7 +117,7 @@ bakeryRouter.route('/:bakeryId/comments')
     res.statusCode = 403;
     res.end(`PUT operation not supported on /bakeries/${req.params.bakeryId}/comments`);
 })
-.delete(authenticate.verifyUser, (req, res, next) => {
+.delete(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
     Bakery.findById(req.params.bakeryId)
     .then(bakery => {
         if (bakery) {
@@ -165,7 +165,7 @@ bakeryRouter.route('/:bakeryId/comments/:commentId')
     res.statusCode = 403;
     res.end(`POST operation not supported on /bakeries/${req.params.bakeryId}/comments/${req.params.commentId}`);
 })
-.put(authenticate.verifyUser, (req, res, next) => {
+.put(cors.corsWithOptions, authenticate.verifyUser, (req, res, next) => {
     Bakery.findById(req.params.bakeryId)
     .then(bakery => {
         if (bakery && bakery.comments.id(req.params.commentId)) {
@@ -194,10 +194,11 @@ bakeryRouter.route('/:bakeryId/comments/:commentId')
     })
     .catch(err => next(err));
 })
-.delete(authenticate.verifyUser, (req, res, next) => {
+.delete(cors.corsWithOptions, authenticate.verifyUser, (req, res, next) => {
     Bakery.findById(req.params.bakeryId)
     .then(bakery => {
         if (bakery && bakery.comments.id(req.params.commentId)) {
+            if((bakery.comments.id(req.params.commentId).author._id).equals(req.user._id)) {
             bakery.comments.id(req.params.commentId).remove();
             bakery.save()
             .then(bakery => {
@@ -206,6 +207,11 @@ bakeryRouter.route('/:bakeryId/comments/:commentId')
                 res.json(bakery);
             })
             .catch(err => next(err));
+        } else {
+            err = new Error(`You are not the Author!`);
+            err.status = 403;
+            return next(err);
+        }
         } else if (!bakery) {
             err = new Error(`Bakery ${req.params.bakeryId} not found`);
             err.status = 404;
