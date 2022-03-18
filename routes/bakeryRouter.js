@@ -1,5 +1,6 @@
 const express = require('express');
 const Bakery = require('../models/bakery');
+const authenticate = require('../authenticate');
 
 const bakeryRouter = express.Router();
 
@@ -13,7 +14,7 @@ bakeryRouter.route('/')
     })
     .catch(err => next(err));
 })
-.post((req, res, next) => {
+.post(authenticate.verifyUser, (req, res, next) => {
     Bakery.create(req.body)
     .then(bakery => {
         console.log('Bakery Created ', bakery);
@@ -23,11 +24,11 @@ bakeryRouter.route('/')
     })
     .catch(err => next(err));
 })
-.put((req, res) => {
+.put(authenticate.verifyUser, (req, res) => {
     res.statusCode = 403;
     res.end('PUT operation not supported on /bakeries');
 })
-.delete((req, res, next) => {
+.delete(authenticate.verifyUser, (req, res, next) => {
     Bakery.deleteMany()
     .then(response => {
         res.statusCode = 200;
@@ -47,11 +48,11 @@ bakeryRouter.route('/:bakeryId')
     })
     .catch(err => next(err));
 })
-.post((req, res) => {
+.post(authenticate.verifyUser, (req, res) => {
     res.statusCode = 403;
     res.end(`POST operation not supported on /bakeries/${req.params.bakeryId}`);
 })
-.put((req, res, next) => {
+.put(authenticate.verifyUser, (req, res, next) => {
     Bakery.findByIdAndUpdate(req.params.bakeryId, {
         $set: req.body
     }, { new: true })
@@ -62,7 +63,7 @@ bakeryRouter.route('/:bakeryId')
     })
     .catch(err => next(err));
 })
-.delete((req, res, next) => {
+.delete(authenticate.verifyUser, (req, res, next) => {
     Bakery.findByIdAndDelete(req.params.bakeryId)
     .then(response => {
         res.statusCode = 200;
@@ -88,7 +89,7 @@ bakeryRouter.route('/:bakeryId/comments')
     })
     .catch(err => next(err));
 })
-.post((req, res, next) => {
+.post(authenticate.verifyUser, (req, res, next) => {
     Bakery.findById(req.params.bakeryId)
     .then(bakery => {
         if (bakery) {
@@ -108,11 +109,11 @@ bakeryRouter.route('/:bakeryId/comments')
     })
     .catch(err => next(err));
 })
-.put((req, res) => {
+.put(authenticate.verifyUser, (req, res) => {
     res.statusCode = 403;
     res.end(`PUT operation not supported on /bakeries/${req.params.bakeryId}/comments`);
 })
-.delete((req, res, next) => {
+.delete(authenticate.verifyUser, (req, res, next) => {
     Bakery.findById(req.params.bakeryId)
     .then(bakery => {
         if (bakery) {
@@ -155,11 +156,11 @@ bakeryRouter.route('/:bakeryId/comments/:commentId')
     })
     .catch(err => next(err));
 })
-.post((req, res) => {
+.post(authenticate.verifyUser, (req, res) => {
     res.statusCode = 403;
     res.end(`POST operation not supported on /bakeries/${req.params.bakeryId}/comments/${req.params.commentId}`);
 })
-.put((req, res, next) => {
+.put(authenticate.verifyUser, (req, res, next) => {
     Bakery.findById(req.params.bakeryId)
     .then(bakery => {
         if (bakery && bakery.comments.id(req.params.commentId)) {
@@ -188,7 +189,7 @@ bakeryRouter.route('/:bakeryId/comments/:commentId')
     })
     .catch(err => next(err));
 })
-.delete((req, res, next) => {
+.delete(authenticate.verifyUser, (req, res, next) => {
     Bakery.findById(req.params.bakeryId)
     .then(bakery => {
         if (bakery && bakery.comments.id(req.params.commentId)) {
